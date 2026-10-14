@@ -1,0 +1,285 @@
+{
+  "info": {
+    "name": "Pets API",
+    "description": "CRUD checks and invalid MongoDB ObjectId middleware tests. Run requests in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "petId",
+      "value": ""
+    },
+    {
+      "key": "invalidPetId",
+      "value": "not-an-object-id"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 200 and server status', function () {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(pm.response.text()).to.eql('Pets server is running 🐾');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject invalid ID - GET",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/pets/{{invalidPetId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 400 for invalid ID', function () {",
+              "    pm.response.to.have.status(400);",
+              "    pm.expect(pm.response.json().message).to.eql('Invalid pet ID');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject invalid ID - PUT",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Updated pet\",\"age\":3,\"breed\":\"Test\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/pets/{{invalidPetId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 400 for invalid ID', function () {",
+              "    pm.response.to.have.status(400);",
+              "    pm.expect(pm.response.json().message).to.eql('Invalid pet ID');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject invalid ID - DELETE",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/pets/{{invalidPetId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 400 for invalid ID', function () {",
+              "    pm.response.to.have.status(400);",
+              "    pm.expect(pm.response.json().message).to.eql('Invalid pet ID');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create pet",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Postman test pet\",\"age\":2,\"breed\":\"Test\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/pets"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('creates a pet and saves its ID', function () {",
+              "    pm.response.to.have.status(201);",
+              "    const pet = pm.response.json();",
+              "    pm.expect(pet).to.have.property('_id');",
+              "    pm.collectionVariables.set('petId', pet._id);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get all pets",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/pets"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns pets including the created pet', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const pets = pm.response.json();",
+              "    pm.expect(pets).to.be.an('array');",
+              "    pm.expect(pets.some(pet => pet._id === pm.collectionVariables.get('petId'))).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get pet by ID",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/pets/{{petId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns the created pet', function () {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(pm.response.json()._id).to.eql(pm.collectionVariables.get('petId'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update pet",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Updated Postman pet\",\"age\":4,\"breed\":\"Updated test\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/pets/{{petId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('updates the pet', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const pet = pm.response.json();",
+              "    pm.expect(pet.name).to.eql('Updated Postman pet');",
+              "    pm.expect(pet.age).to.eql(4);",
+              "    pm.expect(pet.breed).to.eql('Updated test');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete pet",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/pets/{{petId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('deletes the pet', function () {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(pm.response.json()._id).to.eql(pm.collectionVariables.get('petId'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Missing pet returns 404",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/pets/{{petId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 404 after deletion', function () {",
+              "    pm.response.to.have.status(404);",
+              "    pm.expect(pm.response.json().message).to.eql('Pet not found');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
